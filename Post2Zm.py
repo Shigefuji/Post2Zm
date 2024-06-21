@@ -28,7 +28,7 @@ class ZmChat:
 
     def _retrieve_access_token(self):
         """
-        Zoom APIからアクセストークンを取得します。
+        アクセストークンを取得します。
         """
         url = f"{self.TOKEN_URL}?grant_type=account_credentials&account_id={self.account_id}"
         encoded_credentials = b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode()
@@ -146,7 +146,8 @@ class ZmChat:
         Args:
             status (str): 更新するステータス。
         """
-        payload = {"duration": 720, "status": status}
+        #payload = {"duration": 720, "status": status}
+        payload = {"status":status}
         self._send_request("PUT", "/users/me/presence_status", payload)
 
     def run(self):
@@ -157,6 +158,10 @@ class ZmChat:
             current_hour = datetime.datetime.now().hour
             greeting_message = "おはようございます" if current_hour < 12 else "お疲れさまでした"
             self.send_message(self.channel_name, greeting_message)
+            # Type of Status
+            # Away,Available,In_Calendar_Event,Presenting,In_A_Zoom_Meeting,On_A_Call,Out_of_Office,Busy
+            current_status = "Available" if current_hour < 12 else "Out_of_Office"            
+            self.update_presence_status(current_status)
         except Exception as e:
             print(e)
 
