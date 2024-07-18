@@ -20,9 +20,9 @@ class ZmChat:
         """
         with open(config_path, 'r',encoding='utf-8') as config_file:
             config_data = json.load(config_file)
-        self.account_id = config_data["ZOOM_ACCOUNT_ID_TEST"]
-        self.client_id = config_data["ZOOM_CLIENT_ID_TEST"]
-        self.client_secret = config_data["ZOOM_CLIENT_SECRET_TEST"]
+        self.account_id = config_data["ZOOM_ACCOUNT_ID"]
+        self.client_id = config_data["ZOOM_CLIENT_ID"]
+        self.client_secret = config_data["ZOOM_CLIENT_SECRET"]
         self.channel_name = config_data["ZOOM_CHANNEL_NAME"]
         self.access_token = None
 
