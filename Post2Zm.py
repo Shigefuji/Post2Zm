@@ -2,8 +2,8 @@ import json
 import datetime
 from base64 import b64encode
 from http import HTTPStatus
-
 import requests
+
 
 
 
@@ -14,6 +14,7 @@ class ZmChat:
     TOKEN_URL = "https://zoom.us/oauth/token"
     TIMEZONE = "Asia/Tokyo"
 
+
     def __init__(self, config_path):
         """
         初期化メソッド。設定ファイルを読み込み、必要な情報をインスタンス変数に設定します。
@@ -23,9 +24,9 @@ class ZmChat:
         """
         with open(config_path, 'r',encoding='utf-8') as config_file:
             config_data = json.load(config_file)
-        self.account_id = config_data["ZOOM_ACCOUNT_ID_TEST"]
-        self.client_id = config_data["ZOOM_CLIENT_ID_TEST"]
-        self.client_secret = config_data["ZOOM_CLIENT_SECRET_TEST"]
+        self.account_id = config_data["ZOOM_ACCOUNT_ID"]
+        self.client_id = config_data["ZOOM_CLIENT_ID"]
+        self.client_secret = config_data["ZOOM_CLIENT_SECRET"]
         self.channel_name = config_data["ZOOM_CHANNEL_NAME"]
         self.access_token = None
 
@@ -75,6 +76,18 @@ class ZmChat:
                 f"{method} {endpoint}の実行に失敗しました。"
                 f"ステータスコード: {response.status_code}"
             )
+
+    def _load_message_history(self):
+        """
+        メッセージ履歴を読み込みます。
+
+        Returns:
+            dict: メッセージ履歴の辞書。日付をキーとし、メッセージを値とします。
+        """
+        if os.path.exists(self.HISTORY_FILE):
+            with open(self.HISTORY_FILE, 'r', encoding='utf-8') as file:
+                return json.load(file)
+        return {}
 
     def schedule_meeting(self, topic=None, start_time=None, duration=60):
         """
@@ -130,6 +143,24 @@ class ZmChat:
             if channel['name'] == channel_name:
                 return channel['id']
         raise Exception(f'指定された名前のチャンネル "{channel_name}" が見つかりませんでした。')
+    
+    def get_today_messages(self, channel_id):
+        """
+        指定されたチャンネルから当日のメッセージを取得します。
+
+        Args:
+            channel_id (str): チャンネルのID。
+
+        Returns:
+            list: 当日のメッセージリスト。
+        """
+        today = datetime.date.today().isoformat()
+        params = {
+            'to_channel': channel_id,
+            'date': today,
+        }
+        response = self._send_request("GET", f"/chat/users/me/messages", params=params)
+        return [message['message'] for message in response.get('messages', [])]
 
     def send_message(self, channel_name, message):
         """
@@ -139,6 +170,15 @@ class ZmChat:
             channel_name (str): チャンネルの名前。
             message (str): 送信するメッセージ。
         """
+        
+        channel_id = self.get_channel_id(channel_name)
+        today_messages = self.get_today_messages(channel_id)
+
+        # 当日すでに同じメッセージが送信されている場合は送信しない
+        if message in today_messages:
+            print(f"同じメッセージがすでに本日送信されています: {message}")
+            return
+        
         payload = {"message": message, "to_channel": self.get_channel_id(channel_name)}
         self._send_request("POST", "/chat/users/me/messages", payload)
 
@@ -163,8 +203,8 @@ class ZmChat:
             self.send_message(self.channel_name, greeting_message)
             # Type of Status
             # Away,Available,In_Calendar_Event,Presenting,In_A_Zoom_Meeting,On_A_Call,Out_of_Office,Busy
-            current_status = "Available" if current_hour < 12 else "Out_of_Office"            
-            self.update_presence_status(current_status)
+            # current_status = "Available" if current_hour < 12 else "Out_of_Office"            
+            # self.update_presence_status(current_status)
         except Exception as e:
             print(e)
 
