@@ -179,7 +179,7 @@ class ZmChat:
             print(f"同じメッセージがすでに本日送信されています: {message}")
             return
         
-        payload = {"message": message, "to_channel": self.get_channel_id(channel_name)}
+        payload = {"message": message, "to_channel": channel_id}  # ステータス429エラーの解消　連続実行の排除  self.get_channel_id(channel_name)}
         self._send_request("POST", "/chat/users/me/messages", payload)
 
     def update_presence_status(self, status):
@@ -199,7 +199,7 @@ class ZmChat:
         """
         try:
             current_hour = datetime.datetime.now().hour
-            greeting_message = "おはようございます" if current_hour < 12 else "お疲れさまでした"
+            greeting_message = "_おはようございます" if current_hour < 12 else "_お疲れさまでした"
             self.send_message(self.channel_name, greeting_message)
             # Type of Status
             # Away,Available,In_Calendar_Event,Presenting,In_A_Zoom_Meeting,On_A_Call,Out_of_Office,Busy
