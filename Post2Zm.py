@@ -13,6 +13,7 @@ class ZmChat:
     BASE_URL = "https://api.zoom.us/v2"
     TOKEN_URL = "https://zoom.us/oauth/token"
     TIMEZONE = "Asia/Tokyo"
+    LOG_FILE = "zoom_chat_log.txt"
 
 
     def __init__(self, config_path):
@@ -42,6 +43,17 @@ class ZmChat:
             self.access_token = response.json()["access_token"]
         else:
             raise Exception("アクセストークンの取得に失敗しました。")
+
+
+    def _log(self, message):
+        """
+        ログメッセージをファイルに保存します。
+
+        Args:
+            message (str): ログに記録するメッセージ。
+        """
+        with open(self.LOG_FILE, 'a', encoding='utf-8') as log_file:
+            log_file.write(f"{datetime.datetime.now().isoformat()} - {message}\n")
 
     def _send_request(self, method, endpoint, payload=None, params=None):
         """
@@ -137,7 +149,7 @@ class ZmChat:
         Raises:
             Exception: 指定された名前のチャンネルが見つからなかった場合。
         """
-        params = {'page_size': 50}
+        params = {'page_size': 20}
         response = self._send_request("GET", "/chat/users/me/channels", params=params)
         for channel in response.get('channels', []):
             if channel['name'] == channel_name:
@@ -176,6 +188,7 @@ class ZmChat:
 
         # 当日すでに同じメッセージが送信されている場合は送信しない
         if message in today_messages:
+            self._log(f"同じメッセージがすでに本日送信されています: {message}")
             print(f"同じメッセージがすでに本日送信されています: {message}")
             return
         
@@ -193,6 +206,8 @@ class ZmChat:
         payload = {"status":status}
         self._send_request("PUT", "/users/me/presence_status", payload)
 
+
+
     def run(self):
         """
         現在の時間に基づいて挨拶メッセージをチャットチャンネルに送信します。
@@ -207,6 +222,9 @@ class ZmChat:
             # self.update_presence_status(current_status)
         except Exception as e:
             print(e)
+            self._log(f"エラーが発生しました: {str(e)}")
+
+
 
 
 if __name__ == "__main__":
