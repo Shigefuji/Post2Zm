@@ -3,7 +3,7 @@ import datetime
 from base64 import b64encode
 from http import HTTPStatus
 import requests
-
+import time
 
 
 
@@ -119,7 +119,9 @@ class ZmChat:
             "duration": duration,
             "timezone": self.TIMEZONE
         }
+        time.sleep(1)
         response = self._send_request("POST", "/users/me/meetings", payload)
+
         return response.get("join_url")
 
     def create_chat_channel(self, channel_name):
@@ -133,6 +135,7 @@ class ZmChat:
             str: 作成されたチャットチャンネルの参加URL。
         """
         payload = {"name": channel_name, "type": 1}
+        time.sleep(1)
         response = self._send_request("POST", "/chat/users/me/channels", payload)
         return response.get("join_url")
 
@@ -150,6 +153,7 @@ class ZmChat:
             Exception: 指定された名前のチャンネルが見つからなかった場合。
         """
         params = {'page_size': 20}
+        time.sleep(1)
         response = self._send_request("GET", "/chat/users/me/channels", params=params)
         for channel in response.get('channels', []):
             if channel['name'] == channel_name:
@@ -171,6 +175,7 @@ class ZmChat:
             'to_channel': channel_id,
             'date': today,
         }
+        time.sleep(1)
         response = self._send_request("GET", f"/chat/users/me/messages", params=params)
         return [message['message'] for message in response.get('messages', [])]
 
@@ -193,6 +198,7 @@ class ZmChat:
             return
         
         payload = {"message": message, "to_channel": channel_id}  # ステータス429エラーの解消　連続実行の排除  self.get_channel_id(channel_name)}
+        time.sleep(1)
         self._send_request("POST", "/chat/users/me/messages", payload)
 
     def update_presence_status(self, status):
@@ -204,6 +210,7 @@ class ZmChat:
         """
         #payload = {"duration": 720, "status": status}
         payload = {"status":status}
+        time.sleep(1)
         self._send_request("PUT", "/users/me/presence_status", payload)
 
 
